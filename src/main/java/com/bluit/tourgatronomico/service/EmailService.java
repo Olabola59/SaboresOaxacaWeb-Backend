@@ -33,7 +33,7 @@ public class EmailService {
     }
 }
 */
-
+/* 
 package com.bluit.tourgatronomico.service;
 
 import jakarta.mail.internet.MimeMessage;
@@ -88,5 +88,45 @@ public class EmailService {
         } catch (Exception e) {
             throw new RuntimeException("Error enviando correo: " + e.getMessage(), e);
         }
+    }
+}*/
+
+package com.bluit.tourgatronomico.service;
+
+import com.bluit.tourgatronomico.email.MailDispatcherService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+@Service
+public class EmailService {
+
+    private final MailDispatcherService dispatcher;
+
+    @Value("${app.mail.from:${spring.mail.username:${MAIL_FROM:}}}")
+    private String from;
+
+    @Value("${app.mail.from-name:Sabor Oaxaca}")
+    private String fromName;
+
+    public EmailService(MailDispatcherService dispatcher) {
+        this.dispatcher = dispatcher;
+    }
+
+    public void send(String to, String subject, String body) {
+        // Si ya tienes MAIL_FROM en Render, con esto nunca truena por "from"
+        if (from == null || from.trim().isEmpty()) {
+            throw new IllegalStateException("Falta configurar MAIL_FROM (o app.mail.from / spring.mail.username).");
+        }
+
+        // Mantengo tu mismo formato: texto + HTML sencillo
+        String html = "<div style='font-family:Arial,sans-serif;line-height:1.5'>"
+                + body.replace("&", "&amp;")
+                      .replace("<", "&lt;")
+                      .replace(">", "&gt;")
+                      .replace("\n", "<br>")
+                + "</div>";
+
+        // Envia usando Gmail API o SMTP según MAIL_PROVIDER
+        dispatcher.send(to, subject, html);
     }
 }

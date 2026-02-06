@@ -4,22 +4,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class EmailService {
+public class MailDispatcherService {
 
-    private final MailSender smtpSender;
-    private final MailSender gmailSender;
+    private final SmtpMailSender smtpSender;
+    private final GmailApiMailSender gmailSender;
 
     @Value("${MAIL_PROVIDER:SMTP}")
-    private String mailProvider;
+    private String provider;
 
-    public EmailService(SmtpMailSender smtpSender,
-                        GmailApiMailSender gmailSender) {
+    public MailDispatcherService(SmtpMailSender smtpSender, GmailApiMailSender gmailSender) {
         this.smtpSender = smtpSender;
         this.gmailSender = gmailSender;
     }
 
     public void send(String to, String subject, String html) {
-        if ("GMAIL_API".equalsIgnoreCase(mailProvider)) {
+        if ("GMAIL_API".equalsIgnoreCase(provider)) {
             gmailSender.send(to, subject, html);
         } else {
             smtpSender.send(to, subject, html);

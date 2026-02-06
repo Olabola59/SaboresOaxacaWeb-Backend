@@ -11,7 +11,8 @@ public class SmtpMailSender implements MailSender {
 
     private final JavaMailSender mailSender;
 
-    @Value("${MAIL_FROM}")
+    //@Value("${MAIL_FROM}")
+    @Value("${MAIL_FROM:${app.mail.from:${spring.mail.username:}}}")
     private String from;
 
     public SmtpMailSender(JavaMailSender mailSender) {
