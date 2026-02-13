@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.bluit.tourgatronomico.service.PreferenciaService;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +33,10 @@ public class LugarService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private PreferenciaService preferenciaService;
+
 
     // ===== CRUD =====
 
@@ -88,7 +94,17 @@ public class LugarService {
                 );
                 platillo.setLugar(guardado);
 
-                platilloRepository.save(platillo);
+                //platilloRepository.save(platillo);
+
+                Platillo platilloGuardado = platilloRepository.save(platillo);
+
+                if (p.getPalabraIds() != null && !p.getPalabraIds().isEmpty()) {
+                    for (Long palabraId : p.getPalabraIds()) {
+                        preferenciaService.agregarAPlatillo(platilloGuardado.getId(), palabraId);
+                    }
+                }
+
+
             }
         }
 
