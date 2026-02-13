@@ -323,7 +323,7 @@ public class AuthController {
     // =========================
     // RESET PASSWORD
     // =========================
-    @PostMapping("/reset-password")
+    /*@PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
         try {
             String token = body.get("token");
@@ -357,6 +357,49 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", "Error restableciendo contraseña: " + e.getMessage()));
         }
+    }*/
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        try {
+            String token = body.get("token");
+            String newPassword = body.get("password");
+
+            if (token == null || token.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Token requerido"));
+            }
+            if (newPassword == null || newPassword.trim().length() < 6) {
+                return ResponseEntity.badRequest().body(Map.of("message", "La contraseña debe tener al menos 6 caracteres"));
+            }
+
+            Usuario usuario = usuarioRepository.findByResetPasswordToken(token.trim())
+                    .orElseThrow(() -> new RuntimeException("Token inválido o ya usado"));
+
+            if (usuario.getResetPasswordTokenExpira() != null &&
+                usuario.getResetPasswordTokenExpira().isBefore(LocalDateTime.now())) {
+                return ResponseEntity.status(HttpStatus.GONE)
+                        .body(Map.of("message", "El token expiró. Solicita uno nuevo."));
+            }
+
+            usuario.setPassword(passwordEncoder.encode(newPassword.trim()));
+            usuario.setResetPasswordToken(null);
+            usuario.setResetPasswordTokenExpira(null);
+
+            // ✅ CAMBIO MÍNIMO: permitir login aunque no se haya verificado por correo
+            usuario.setEmailVerificado(true);
+            usuario.setVerificationToken(null);
+            usuario.setVerificationTokenExpira(null);
+
+            usuarioRepository.save(usuario);
+
+            return ResponseEntity.ok(Map.of("message", "Contraseña actualizada ✅"));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Error restableciendo contraseña: " + e.getMessage()));
+        }
     }
+
 }
 
